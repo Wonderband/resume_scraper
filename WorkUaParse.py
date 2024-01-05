@@ -8,36 +8,38 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from bs4 import BeautifulSoup
+from dataclasses import dataclass, field
 
 
-class WorkUaParseParams:
-    def __init__(self):
-        self.url = "https://www.work.ua/resumes-"
-        self.keyword = "developer"
-        self.query = self.url + self.keyword + "/"
-        self.cv_preview_selector = "div.card-search.resume-link.card-visited.wordwrap"
-        self.cv_selector = "div.card.wordwrap.cut-top"
-        self.cv_id_prefix = "resume_"
-        self.cv_url_prefix = "https://www.work.ua/resumes/"
-        self.name_selector = {"tag": "h1", "class": "cut-top"}
-        self.position_selector = {"tag": "h2", "class": "add-top-exception add-top-exception-xs"}
-        self.experience_selector = {"tag": "h2", "class": "h4 strong-600 add-top-exception add-top-exception-xs",
-                                    "exclude": "contactInfo"}
+@dataclass
+class WorkUaConfigParams:
+    url: str = "https://www.work.ua/resumes-"
+    keyword: str = "developer"
+    query: str = f"{url}{keyword}/"
+    cv_preview_selector: str = "div.card-search.resume-link.card-visited.wordwrap"
+    cv_selector: str = "div.card.wordwrap.cut-top"
+    cv_id_prefix: str = "resume_"
+    cv_url_prefix: str = "https://www.work.ua/resumes/"
+    name_selector: dict[str, str] = field(default_factory=lambda: {"tag": "h1", "class": "cut-top"})
+    position_selector: dict[str, str] = field(default_factory=lambda: {"tag": "h2", "class": "add-top-exception add-top-exception-xs"})
+    experience_selector: dict[str, str] = field(default_factory=lambda: {"tag": "h2", "class": "h4 strong-600 add-top-exception add-top-exception-xs", "exclude": "contactInfo"})
+
+    field(default_factory=lambda: {
+        'line1': None,
+        'line2': None,
+        'etc': None,
+    })
 
 
 class ChromeDriver:
     def __init__(self):
-        self.browser = None
+        self.browser = webdriver.Chrome(
+            service=ChromeService(ChromeDriverManager().install()),
+        )
         self.tabs = None
         self.options = {
             "timeout": 30,
         }
-
-    def start(self):
-        self.browser = webdriver.Chrome(
-            service=ChromeService(ChromeDriverManager().install()),
-
-        )
         self.browser.set_page_load_timeout(self.options["timeout"])
 
     def request_site(self, query):

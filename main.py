@@ -1,10 +1,9 @@
-from WorkUaParse import ChromeDriver, WorkUaParseParams, GetElementsBySelector, ScrapeElement
+from WorkUaParse import ChromeDriver, WorkUaConfigParams, GetElementsBySelector, ScrapeElement
 
 
 def main():
-    params = WorkUaParseParams()
+    params = WorkUaConfigParams()
     driver = ChromeDriver()
-    driver.start()
     browser = driver.request_site(params.query)
     cv_previews = GetElementsBySelector(params.cv_preview_selector).load(browser, False)
     for cv_preview in cv_previews:
