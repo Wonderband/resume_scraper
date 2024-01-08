@@ -1,11 +1,10 @@
-from WorkUaParse import ChromeDriver, WorkUaConfigParams, WorkUaScraper
+from WorkUaParse import ChromeDriver, WorkUaScraper
 
 
 def main() -> None:
-    params = WorkUaConfigParams()
-    scraper = WorkUaScraper(params)
+    scraper = WorkUaScraper()
     driver = ChromeDriver()
-    browser = driver.request_site(scraper.query)
+    browser = driver.request_site(scraper.params.query)
     cv_previews = scraper.load_cv(browser, False)
     for cv_preview in cv_previews:
         driver.open_new_tab(cv_preview)
