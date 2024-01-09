@@ -20,7 +20,9 @@ class WorkUaQueryParams:
     employment_partial = 75
     age_from = 14
     age_to = 100
-    # gender = {"male": 86, "female": 87}
+    photo = "photo=1"
+    gender_male = 86
+    gender_female = 87
 
 
 @dataclass
@@ -53,8 +55,14 @@ class UserDialog:
         employment_full = WorkUaQueryParams().employment_full if full_time_input == "y" else ""
         partial_time_input = input("Are you looking for partial-time employment? (y/n): ").lower()
         employment_partial = WorkUaQueryParams().employment_partial if partial_time_input == "y" else ""
-        age_from = input("Age from?: ").lower()
-        age_to = input("Age to?: ").lower()
+        age_from = input("Age from: ").lower()
+        age_to = input("Age to: ").lower()
+        photo_input = input("Do you need CV with photo? (y/n): ").lower()
+        photo = WorkUaQueryParams().photo if photo_input == "y" else ""
+        male_input = input("Do you consider males? (y/n): ").lower()
+        gender_male = WorkUaQueryParams().gender_male if male_input == "y" else ""
+        female_input = input("Do you consider females? (y/n): ").lower()
+        gender_female = WorkUaQueryParams().gender_female if female_input == "y" else ""
 
         self.input = {
             "keyword": keyword,
@@ -62,15 +70,21 @@ class UserDialog:
             "employment_partial": employment_partial,
             "age_from": age_from,
             "age_to": age_to,
+            "photo": photo,
+            "gender_male": gender_male,
+            "gender_female": gender_female,
+
         }
 
 
 class WorkUaQueryBuilder:
     def __init__(self, user_input):
-        self.params = WorkUaQueryParams()
+        self.url = WorkUaQueryParams().url
         self.keyword = user_input["keyword"]
         self.employment = self.get_employment(user_input)
         self.age = self.get_age(user_input)
+        self.gender = self.get_gender(user_input)
+        self.photo = self.get_photo(user_input)
 
     @staticmethod
     def get_employment(user_input):
@@ -85,19 +99,37 @@ class WorkUaQueryBuilder:
     def get_age(user_input):
         if not (user_input["age_from"] or user_input["age_to"]):
             return ""
-        query = f"&agefrom={user_input['age_from']}&ageto={user_input['age_to']}"
+        query = f"agefrom={user_input['age_from']}&ageto={user_input['age_to']}"
         if query.endswith("="):
             query = query.removesuffix("&ageto=")
-        if query.startswith("&agefrom=&"):
-            query = query.removeprefix("&agefrom=")
+        if query.startswith("agefrom=&"):
+            query = query.removeprefix("agefrom=")
         return query
+
+    @staticmethod
+    def get_photo(user_input):
+        return user_input["photo"]
+
+    @staticmethod
+    def get_gender(user_input):
+        if not (user_input["gender_male"] or user_input["gender_female"]):
+            return ""
+        query = f"{user_input['gender_male']}+{user_input['gender_female']}"
+        if query.startswith("+") or query.endswith("+"):
+            query = query.replace("+", "")
+        return f"gender={query}"
 
     def create_query(self):
         if not self.keyword:
-            self.params.url = self.params.url.removesuffix("-")
-        query = self.params.url + self.keyword + "/?" + self.employment + self.age
-        if query.endswith("?"):
-            query = query.removesuffix("?")
+            self.url = self.url.removesuffix("-")
+        query = self.url + self.keyword + "/"
+        filters = "&".join([self.employment, self.age, self.gender, self.photo])
+        while "&&" in filters:
+            filters = filters.replace("&&", "")
+        if not filters:
+            return query
+        filters = filters.strip("&")
+        query = query + "?" + filters
         return query
 
 
