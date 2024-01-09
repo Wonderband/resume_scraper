@@ -14,10 +14,17 @@ from dataclasses import dataclass, field
 
 
 @dataclass
-class WorkUaConfigParams:
+class WorkUaQueryParams:
     url: str = "https://www.work.ua/resumes-"
-    keyword: str = "developer"
-    query: str = f"{url}{keyword}/"
+    employment_full = 74
+    employment_partial = 75
+    age_from = 14
+    age_to = 100
+    # gender = {"male": 86, "female": 87}
+
+
+@dataclass
+class WorkUaConfigParams:
     cv_preview_selector: str = "div.card-search.resume-link.card-visited.wordwrap"
     cv_selector: str = "div.card.wordwrap.cut-top"
     cv_id_prefix: str = "resume_"
@@ -32,6 +39,66 @@ class WorkUaConfigParams:
         default_factory=lambda: {"tag": "span", "class": "text-default-7 add-right-xs add-bottom-sm"})
     details_selector: dict[str, str] = field(
         default_factory=lambda: {"tag": "dl", "class": "dl-horizontal"})
+    add_info_selector: dict[str, str] = field(
+        default_factory=lambda: {"tag": "div", "class": "wordwrap", "id": "add_info"})
+
+
+class UserDialog:
+    def __init__(self):
+        self.input = {}
+
+    def prompt_user(self):
+        keyword = input("Enter the keyword for search: ")
+        full_time_input = input("Are you looking for full-time employment? (y/n): ").lower()
+        employment_full = WorkUaQueryParams().employment_full if full_time_input == "y" else ""
+        partial_time_input = input("Are you looking for partial-time employment? (y/n): ").lower()
+        employment_partial = WorkUaQueryParams().employment_partial if partial_time_input == "y" else ""
+        age_from = input("Age from?: ").lower()
+        age_to = input("Age to?: ").lower()
+
+        self.input = {
+            "keyword": keyword,
+            "employment_full": employment_full,
+            "employment_partial": employment_partial,
+            "age_from": age_from,
+            "age_to": age_to,
+        }
+
+
+class WorkUaQueryBuilder:
+    def __init__(self, user_input):
+        self.params = WorkUaQueryParams()
+        self.keyword = user_input["keyword"]
+        self.employment = self.get_employment(user_input)
+        self.age = self.get_age(user_input)
+
+    @staticmethod
+    def get_employment(user_input):
+        if not (user_input["employment_full"] or user_input["employment_partial"]):
+            return ""
+        query = f"{user_input['employment_full']}+{user_input['employment_partial']}"
+        if query.startswith("+") or query.endswith("+"):
+            query = query.replace("+", "")
+        return f"employment={query}"
+
+    @staticmethod
+    def get_age(user_input):
+        if not (user_input["age_from"] or user_input["age_to"]):
+            return ""
+        query = f"&agefrom={user_input['age_from']}&ageto={user_input['age_to']}"
+        if query.endswith("="):
+            query = query.removesuffix("&ageto=")
+        if query.startswith("&agefrom=&"):
+            query = query.removeprefix("&agefrom=")
+        return query
+
+    def create_query(self):
+        if not self.keyword:
+            self.params.url = self.params.url.removesuffix("-")
+        query = self.params.url + self.keyword + "/?" + self.employment + self.age
+        if query.endswith("?"):
+            query = query.removesuffix("?")
+        return query
 
 
 class ChromeDriver:
@@ -108,6 +175,7 @@ class WorkUaScraper(Scraper):
             "age": self.get_age(details),
             "city": self.get_city(details),
             "places": self.get_places(details),
+            # "add_info": self.get_add_info(soup, params)
         }
         for key, value in cv_data.items():
             if value:
@@ -187,3 +255,9 @@ class WorkUaScraper(Scraper):
     @staticmethod
     def get_places(details: dict["str", "str"]) -> str | None:
         return details["Готовий працювати"] if "Готовий працювати" in details.keys() else None
+
+    @staticmethod
+    def get_add_info(soup: BeautifulSoup, params: WorkUaConfigParams) -> str:
+        add_info_element = soup.find(params.add_info_selector["tag"], class_=params.add_info_selector["class"],
+                                     id=params.add_info_selector["id"])
+        return add_info_element.text.strip().replace("\xa0", " ")
