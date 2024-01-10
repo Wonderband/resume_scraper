@@ -31,3 +31,4 @@ class WorkUaQueryParams:
     photo = "photo=1"
     gender_male = 86
     gender_female = 87
+
