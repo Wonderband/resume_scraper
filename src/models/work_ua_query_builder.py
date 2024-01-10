@@ -1,4 +1,5 @@
 from src.models.work_ua_config import WorkUaQueryParams
+from src.utils.helper_functions import get_code_from_sum, get_code_from_years
 
 
 class WorkUaQueryBuilder:
@@ -10,6 +11,9 @@ class WorkUaQueryBuilder:
         self.gender = self.get_gender(user_input)
         self.photo = self.get_photo(user_input)
         self.salary = self.get_salary(user_input)
+        self.education = self.get_education(user_input)
+        self.experience = self.get_experience(user_input)
+        self.english = self.get_english(user_input)
 
     @staticmethod
     def get_employment(user_input):
@@ -56,34 +60,45 @@ class WorkUaQueryBuilder:
             return f"salaryfrom={salary_from}"
         return f"salaryfrom={salary_from}&salaryto={salary_to}"
 
+    @staticmethod
+    def get_education(user_input):
+        if not user_input["education"]:
+            return ""
+        return f"education={user_input['education']}"
+
+    @staticmethod
+    def get_experience(user_input):
+        if not user_input["experience"]:
+            return ""
+        years = get_code_from_years(user_input["experience"])
+        return f"experience={years}"
+
+    @staticmethod
+    def get_english(user_input):
+        if not user_input["english"]:
+            return ""
+        return f"language={user_input['english']}"
+
     def create_query(self):
         if not self.keyword:
             self.url = self.url.removesuffix("-")
         query = self.url + self.keyword + "/"
-        filters = "&".join([self.employment, self.age, self.gender, self.photo, self.salary])
+        filters = "&".join(
+            [
+                self.employment,
+                self.age,
+                self.gender,
+                self.photo,
+                self.salary,
+                self.education,
+                self.experience,
+                self.english,
+            ]
+        )
         while "&&" in filters:
-            filters = filters.replace("&&", "")
+            filters = filters.replace("&&", "&")
         if not filters:
             return query
         filters = filters.strip("&")
         query = query + "?" + filters
         return query
-
-
-def get_code_from_sum(salary):
-    amount = int(salary)
-    if amount < 2000:
-        return 0
-    if amount <= 10000:
-        return amount // 1000
-    if amount < 15000:
-        return 10
-    if amount <= 30000:
-        return 10 + (amount - 10000) // 5000
-    if amount < 40000:
-        return 14
-    if amount < 50000:
-        return 15
-    if amount < 100000:
-        return 16
-    return 17

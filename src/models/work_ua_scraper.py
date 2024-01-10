@@ -1,4 +1,5 @@
 from selenium import webdriver
+from selenium.common import TimeoutException
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
@@ -15,19 +16,22 @@ class WorkUaScraper(Scraper):
 
     def load_cv(self: "WorkUaScraper", browser: webdriver.Chrome, single: bool) -> WebElement | list[WebElement]:
         params = self.params
-        if single:
+        try:
+            if single:
+                return WebDriverWait(browser, 10).until(
+                    ec.visibility_of_element_located((By.CSS_SELECTOR, params.cv_selector))
+                )
             return WebDriverWait(browser, 10).until(
-                ec.visibility_of_element_located((By.CSS_SELECTOR, params.cv_selector))
+                ec.visibility_of_all_elements_located((By.CSS_SELECTOR, params.cv_preview_selector))
             )
-        return WebDriverWait(browser, 10).until(
-            ec.visibility_of_all_elements_located((By.CSS_SELECTOR, params.cv_preview_selector))
-        )
+        except TimeoutException as e:
+            print(e)
 
     def get_cv_data(self: "WorkUaScraper", cv: WebElement) -> dict[str, dict]:
         params = self.params
         cv_url = self.get_cv_url(cv, params)
         html = cv.get_attribute("innerHTML")
-        soup = BeautifulSoup(html, 'html.parser')
+        soup = BeautifulSoup(html, "html.parser")
         details = self.get_details(soup, params)
         title = self.get_title(soup, params)
         cv_data = {
@@ -76,9 +80,11 @@ class WorkUaScraper(Scraper):
 
     @staticmethod
     def get_experience(soup: BeautifulSoup, params: WorkUaConfigParams) -> list[str]:
-        experience_elements = soup.find_all(params.experience_selector["tag"],
-                                            class_=params.experience_selector["class"],
-                                            id=lambda x: x != params.experience_selector["exclude"])
+        experience_elements = soup.find_all(
+            params.experience_selector["tag"],
+            class_=params.experience_selector["class"],
+            id=lambda x: x != params.experience_selector["exclude"],
+        )
         experience = []
         for exp_element in experience_elements:
             experience.append(exp_element.text.strip())
@@ -92,11 +98,11 @@ class WorkUaScraper(Scraper):
     @staticmethod
     def get_details(soup: BeautifulSoup, params: WorkUaConfigParams) -> dict["str", "str"]:
         details_wrapper = soup.find(params.details_selector["tag"], class_=params.details_selector["class"])
-        key_elements = details_wrapper.select('dt')
+        key_elements = details_wrapper.select("dt")
         details = {}
         for key_element in key_elements:
-            key = key_element.get_text(strip=True).replace("\xa0", " ").removesuffix(':')
-            value_element = key_element.find_next('dd')
+            key = key_element.get_text(strip=True).replace("\xa0", " ").removesuffix(":")
+            value_element = key_element.find_next("dd")
             value = value_element.get_text(strip=True).replace("\xa0", " ")
             details[key] = value
         return details
@@ -123,6 +129,7 @@ class WorkUaScraper(Scraper):
 
     @staticmethod
     def get_add_info(soup: BeautifulSoup, params: WorkUaConfigParams) -> str:
-        add_info_element = soup.find(params.add_info_selector["tag"], class_=params.add_info_selector["class"],
-                                     id=params.add_info_selector["id"])
+        add_info_element = soup.find(
+            params.add_info_selector["tag"], class_=params.add_info_selector["class"], id=params.add_info_selector["id"]
+        )
         return add_info_element.text.strip().replace("\xa0", " ")

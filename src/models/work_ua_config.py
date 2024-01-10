@@ -9,16 +9,22 @@ class WorkUaConfigParams:
     cv_url_prefix: str = "https://www.work.ua/resumes/"
     name_selector: dict[str, str] = field(default_factory=lambda: {"tag": "h1", "class": "cut-top"})
     position_selector: dict[str, str] = field(
-        default_factory=lambda: {"tag": "h2", "class": "add-top-exception add-top-exception-xs"})
+        default_factory=lambda: {"tag": "h2", "class": "add-top-exception add-top-exception-xs"}
+    )
     experience_selector: dict[str, str] = field(
-        default_factory=lambda: {"tag": "h2", "class": "h4 strong-600 add-top-exception add-top-exception-xs",
-                                 "exclude": "contactInfo"})
+        default_factory=lambda: {
+            "tag": "h2",
+            "class": "h4 strong-600 add-top-exception add-top-exception-xs",
+            "exclude": "contactInfo",
+        }
+    )
     date_selector: dict[str, str] = field(
-        default_factory=lambda: {"tag": "span", "class": "text-default-7 add-right-xs add-bottom-sm"})
-    details_selector: dict[str, str] = field(
-        default_factory=lambda: {"tag": "dl", "class": "dl-horizontal"})
+        default_factory=lambda: {"tag": "span", "class": "text-default-7 add-right-xs add-bottom-sm"}
+    )
+    details_selector: dict[str, str] = field(default_factory=lambda: {"tag": "dl", "class": "dl-horizontal"})
     add_info_selector: dict[str, str] = field(
-        default_factory=lambda: {"tag": "div", "class": "wordwrap", "id": "add_info"})
+        default_factory=lambda: {"tag": "div", "class": "wordwrap", "id": "add_info"}
+    )
 
 
 @dataclass
@@ -31,4 +37,5 @@ class WorkUaQueryParams:
     photo = "photo=1"
     gender_male = 86
     gender_female = 87
-
+    education = 66
+    english = 1

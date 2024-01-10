@@ -21,6 +21,11 @@ class UserDialog:
         gender_female = WorkUaQueryParams().gender_female if female_input == "y" else ""
         salary_from_input = input("Lowest salary you consider: ")
         salary_to_input = input("Highest salary you consider: ")
+        education_input = input("Do you consider only candidates with Higher education? (y/n): ").lower()
+        education = WorkUaQueryParams().education if education_input == "y" else ""
+        experience_input = input("Years of experience (0 - less than 1 year): ")
+        english_input = input("Is knowledge of English is mandatory? (y/n): ")
+        english = WorkUaQueryParams().english if english_input == "y" else ""
 
         self.input = {
             "keyword": keyword,
@@ -33,4 +38,7 @@ class UserDialog:
             "gender_female": gender_female,
             "salary_from": salary_from_input,
             "salary_to": salary_to_input,
+            "education": education,
+            "experience": experience_input,
+            "english": english,
         }
