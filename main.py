@@ -1,4 +1,7 @@
-from WorkUaParse import ChromeDriver, WorkUaScraper, WorkUaQueryBuilder, UserDialog
+from src.models.chrome_driver import ChromeDriver
+from src.models.user_dialog import UserDialog
+from src.models.work_ua_query_builder import WorkUaQueryBuilder
+from src.models.work_ua_scraper import WorkUaScraper
 
 
 def main() -> None:
